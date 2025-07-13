@@ -205,7 +205,7 @@ class Router
 
         $this->segments = explode(
             '/',
-            (string) parse_url(is_string($request_uri) ? $request_uri : '/', PHP_URL_PATH)
+            (string) parse_url(is_string($request_uri) ? urldecode($request_uri) : '/', PHP_URL_PATH)
         );
         // Path always begins with a slash.
         array_shift($this->segments);
