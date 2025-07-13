@@ -35,6 +35,10 @@ class Router
             $this->block();
         }
 
+        if ($this->is_core_dot_slug()) {
+            return;
+        }
+
         if ($this->is_dot_slug()) {
             $this->respond();
         }
@@ -78,10 +82,6 @@ class Router
             $this->render('image/png', base64_decode(self::PIXEL_B64));
         }
 
-        if ($this->segments[0] === 'robots.txt') {
-            $this->render('text/plain', "User-agent: *\nDisallow:\n");
-        }
-
         // Default response
         $this->render('text/html', '<h1>404<h1><p>Post not found</p>');
     }
@@ -117,7 +117,7 @@ class Router
             && stripos($_SERVER['REDIRECT_URL'], '.php') !== false;
     }
 
-    protected function is_dot_slug(): bool
+    protected function is_core_dot_slug(): bool
     {
         // wp rewrite list --fields=match | grep --fixed-strings '\.'
         $sitemap_regexp = implode('|', [
@@ -130,10 +130,12 @@ class Router
             '^wp-sitemap-([a-z]+?)-([a-z\d_-]+?)-(\d+?)\.xml$',
             '^wp-sitemap-([a-z]+?)-(\d+?)\.xml$',
         ]);
-        if (preg_match(sprintf('#%s#', $sitemap_regexp), $this->segments[0]) === 1) {
-            return false;
-        }
 
+        return preg_match(sprintf('#%s#', $sitemap_regexp), $this->segments[0]) === 1;
+    }
+
+    protected function is_dot_slug(): bool
+    {
         foreach ($this->segments as $segment) {
             if (preg_match('/\./', $segment) === 1) {
                 return true;
