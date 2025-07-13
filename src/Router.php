@@ -24,6 +24,16 @@ class Router
         $this->set_accepted_types();
     }
 
+    public function allow_non_latin_slug(): void
+    {
+        $this->block_non_latin_slug = false;
+    }
+
+    public function disallow_non_ascii_slug(): void
+    {
+        $this->block_non_ascii_slug = true;
+    }
+
     public function handle(): void
     {
         // Skip the homepage.
@@ -43,11 +53,11 @@ class Router
             $this->respond();
         }
 
-        if ($this->should_block_non_ascii_slug() && $this->is_non_ascii_slug()) {
+        if ($this->block_non_latin_slug && $this->is_non_ascii_slug()) {
             $this->respond();
         }
 
-        if ($this->should_block_non_latin_slug() && $this->is_non_latin_slug()) {
+        if ($this->block_non_ascii_slug && $this->is_non_latin_slug()) {
             $this->respond();
         }
 
@@ -105,7 +115,13 @@ class Router
     protected function render(string $mime, string $content): void
     {
         header('HTTP/1.1 404 Not Found');
-        header('Content-Type: ' . $mime, true);
+        header('Status: 404 Not Found');
+        header('Expires: Wed, 11 Jan 1984 05:00:00 GMT');
+        header('Cache-Control: no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('X-Robots-Tag: noindex, nofollow');
+        header('Content-Type: ' . $mime);
+
         echo $content;
 
         exit;
@@ -165,16 +181,6 @@ class Router
         }
 
         return false;
-    }
-
-    protected function should_block_non_latin_slug(): bool
-    {
-        return $this->block_non_latin_slug;
-    }
-
-    protected function should_block_non_ascii_slug(): bool
-    {
-        return $this->block_non_ascii_slug;
     }
 
     protected function accepts(string $mime): bool
