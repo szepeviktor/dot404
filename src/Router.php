@@ -20,12 +20,17 @@ class Router
         $this->block_non_latin_slug = true;
         $this->block_non_ascii_slug = false;
 
-        $this->set_segments($_SERVER['REQUEST_URI']);
-        $this->set_accepted_types($_SERVER['HTTP_ACCEPT'] ?? '');
+        $this->set_segments();
+        $this->set_accepted_types();
     }
 
     public function handle(): void
     {
+        // Skip the homepage.
+        if ($this->segments === ['']) {
+            return;
+        }
+
         if ($this->is_non_existent_php()) {
             $this->block();
         }
@@ -86,6 +91,8 @@ class Router
      */
     protected function block(): void
     {
+        error_log('Break-in attempt detected: dot404_nonexistent_php');
+
         header('HTTP/1.1 403 Forbidden');
         echo 'Forbidden';
 
@@ -112,6 +119,21 @@ class Router
 
     protected function is_dot_slug(): bool
     {
+        // wp rewrite list --fields=match | grep --fixed-strings '\.'
+        $sitemap_regexp = implode('|', [
+            'sitemap_index\.xml$',
+            '([^/]+?)-sitemap([0-9]+)?\.xml$',
+            '([a-z]+)?-?sitemap\.xsl$',
+            '^wp-sitemap\.xml$',
+            '^wp-sitemap\.xsl$',
+            '^wp-sitemap-index\.xsl$',
+            '^wp-sitemap-([a-z]+?)-([a-z\d_-]+?)-(\d+?)\.xml$',
+            '^wp-sitemap-([a-z]+?)-(\d+?)\.xml$',
+        ]);
+        if (preg_match(sprintf('#%s#', $sitemap_regexp), $this->segments[0]) === 1) {
+            return false;
+        }
+
         foreach ($this->segments as $segment) {
             if (preg_match('/\./', $segment) === 1) {
                 return true;
@@ -168,20 +190,20 @@ class Router
         return false;
     }
 
-    protected function set_segments(string $url): void
+    protected function set_segments(): void
     {
-        $this->segments = explode('/', (string) parse_url($url, PHP_URL_PATH));
+        $this->segments = explode('/', (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
         // Path always begins with a slash.
         array_shift($this->segments);
     }
 
-    protected function set_accepted_types(string $header): void
+    protected function set_accepted_types(): void
     {
-        $types = explode(',', $header);
+        $header_parts = explode(',', $_SERVER['HTTP_ACCEPT'] ?? '');
 
         $types = array_map(static function ($type) {
             return strtolower(trim(explode(';', $type)[0]));
-        }, $types);
+        }, $header_parts);
 
         $this->accepted_types = array_filter($types);
     }
