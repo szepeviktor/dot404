@@ -86,7 +86,7 @@ class Router
         }
 
         if (
-            preg_match('/\.(jpe?g|png|gif|ico|webp|bmp)$/', end($this->segments)) === 1
+            preg_match('/\.(jpe?g|png|gif|ico|webp|bmp)$/i', end($this->segments)) === 1
             || $this->accepts('image/*')
         ) {
             $this->render('image/png', base64_decode(self::PIXEL_B64));
