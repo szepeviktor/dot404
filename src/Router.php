@@ -129,8 +129,9 @@ class Router
 
     protected function is_non_existent_php(): bool
     {
-        return isset($_SERVER['REDIRECT_URL'])
-            && stripos($_SERVER['REDIRECT_URL'], '.php') !== false;
+        $redirect_url = filter_input(INPUT_SERVER, 'REDIRECT_URL', FILTER_SANITIZE_URL);
+
+        return is_string($redirect_url) && stripos($redirect_url, '.php') !== false;
     }
 
     protected function is_core_dot_slug(): bool
@@ -200,14 +201,20 @@ class Router
 
     protected function set_segments(): void
     {
-        $this->segments = explode('/', (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+        $request_uri = filter_input(INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL);
+
+        $this->segments = explode(
+            '/',
+            (string) parse_url(is_string($request_uri) ? $request_uri : '/', PHP_URL_PATH)
+        );
         // Path always begins with a slash.
         array_shift($this->segments);
     }
 
     protected function set_accepted_types(): void
     {
-        $header_parts = explode(',', $_SERVER['HTTP_ACCEPT'] ?? '');
+        $header = filter_input(INPUT_SERVER, 'HTTP_ACCEPT', FILTER_UNSAFE_RAW);
+        $header_parts = explode(',', is_string($header) ? $header : '');
 
         $types = array_map(static function ($type) {
             return strtolower(trim(explode(';', $type)[0]));
@@ -218,7 +225,8 @@ class Router
 
     protected function is_ajax_request(): bool
     {
-        return ! empty($_SERVER['HTTP_X_REQUESTED_WITH'])
-            && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        $header = filter_input(INPUT_SERVER, 'HTTP_X_REQUESTED_WITH', FILTER_UNSAFE_RAW);
+
+        return is_string($header) && strtolower($header) === 'xmlhttprequest';
     }
 }
