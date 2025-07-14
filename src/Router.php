@@ -42,6 +42,7 @@ class Router
         }
 
         if ($this->is_non_existent_php()) {
+            error_log('Break-in attempt detected: dot404_nonexistent_php');
             $this->block();
         }
 
@@ -50,14 +51,17 @@ class Router
         }
 
         if ($this->is_dot_slug()) {
+            error_log('Malicious traffic detected: dot404_dot_404');
             $this->respond();
         }
 
-        if ($this->block_non_latin_slug && $this->is_non_ascii_slug()) {
+        if ($this->block_non_latin_slug && $this->is_non_latin_slug()) {
+            error_log('Malicious traffic detected: dot404_non_latin_404');
             $this->respond();
         }
 
-        if ($this->block_non_ascii_slug && $this->is_non_latin_slug()) {
+        if ($this->block_non_ascii_slug && $this->is_non_ascii_slug()) {
+            error_log('Malicious traffic detected: dot404_non_ascii_404');
             $this->respond();
         }
 
@@ -101,8 +105,6 @@ class Router
      */
     protected function block(): void
     {
-        error_log('Break-in attempt detected: dot404_nonexistent_php');
-
         header('HTTP/1.1 403 Forbidden');
         echo 'Forbidden';
 
@@ -162,10 +164,10 @@ class Router
         return false;
     }
 
-    protected function is_non_ascii_slug(): bool
+    protected function is_non_latin_slug(): bool
     {
         foreach ($this->segments as $segment) {
-            if (preg_match('/[^0-9A-Z_a-z-]/', $segment) === 1) {
+            if (preg_match('/[^\p{N}\p{Latin}_-]/u', $segment) === 1) {
                 return true;
             }
         }
@@ -173,10 +175,10 @@ class Router
         return false;
     }
 
-    protected function is_non_latin_slug(): bool
+    protected function is_non_ascii_slug(): bool
     {
         foreach ($this->segments as $segment) {
-            if (preg_match('/[^\p{N}\p{L}]/u', $segment) === 1) {
+            if (preg_match('/[^0-9A-Z_a-z-]/', $segment) === 1) {
                 return true;
             }
         }
