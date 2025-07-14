@@ -2,6 +2,22 @@
 
 Handle requests with a dot for non-existent files.
 
+## Requirements
+
+- PHP 7 or 8
+
+## Configuration
+
+See public methods.
+
+## Usage
+
+Start early.
+
+```php
+(new Router())->handle();
+```
+
 ## Run tests
 
 ```shell
