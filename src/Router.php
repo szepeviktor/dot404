@@ -141,7 +141,7 @@ class Router
     protected function is_core_dot_slug(): bool
     {
         // wp rewrite list --fields=match | grep --fixed-strings '\.'
-        $sitemap_regexp = implode('|', [
+        $core_regexp = implode('|', [
             'sitemap_index\.xml$',
             '([^/]+?)-sitemap([0-9]+)?\.xml$',
             '([a-z]+)?-?sitemap\.xsl$',
@@ -150,9 +150,14 @@ class Router
             '^wp-sitemap-index\.xsl$',
             '^wp-sitemap-([a-z]+?)-([a-z\d_-]+?)-(\d+?)\.xml$',
             '^wp-sitemap-([a-z]+?)-(\d+?)\.xml$',
+            'robots\.txt$',
+            // see respond() 'favicon\.ico$',
+            'sitemap\.xml',
+            // old '.*wp-(atom|rdf|rss|rss2|feed|commentsrss2)\.php$',
+            // 403 '.*wp-app\.php(/.*)?$',
         ]);
 
-        return preg_match(sprintf('#%s#', $sitemap_regexp), $this->segments[0]) === 1;
+        return preg_match(sprintf('#%s#', $core_regexp), $this->segments[0]) === 1;
     }
 
     protected function is_dot_slug(): bool
@@ -186,6 +191,13 @@ class Router
         }
 
         return false;
+    }
+
+    protected function is_ajax_request(): bool
+    {
+        $header = filter_input(INPUT_SERVER, 'HTTP_X_REQUESTED_WITH', FILTER_UNSAFE_RAW);
+
+        return is_string($header) && strtolower($header) === 'xmlhttprequest';
     }
 
     protected function accepts(string $mime): bool
@@ -225,12 +237,5 @@ class Router
         }, $header_parts);
 
         $this->accepted_types = array_filter($types);
-    }
-
-    protected function is_ajax_request(): bool
-    {
-        $header = filter_input(INPUT_SERVER, 'HTTP_X_REQUESTED_WITH', FILTER_UNSAFE_RAW);
-
-        return is_string($header) && strtolower($header) === 'xmlhttprequest';
     }
 }
