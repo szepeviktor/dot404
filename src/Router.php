@@ -41,9 +41,8 @@ class Router
             return;
         }
 
-        if ($this->is_non_existent_php()) {
-            error_log('Break-in attempt detected: dot404_nonexistent_php');
-            $this->block();
+        if (!$this->is_permalink()) {
+            return;
         }
 
         if ($this->is_core_dot_slug()) {
@@ -103,19 +102,6 @@ class Router
     /**
      * @return never
      */
-    protected function block(): void
-    {
-        header('HTTP/1.1 403 Forbidden');
-        header('Status: 403 Forbidden');
-
-        echo 'Forbidden';
-
-        exit;
-    }
-
-    /**
-     * @return never
-     */
     protected function render(string $mime, string $content): void
     {
         header('HTTP/1.1 404 Not Found');
@@ -131,11 +117,11 @@ class Router
         exit;
     }
 
-    protected function is_non_existent_php(): bool
+    protected function is_permalink(): bool
     {
         $redirect_url = filter_input(INPUT_SERVER, 'REDIRECT_URL', FILTER_SANITIZE_URL);
 
-        return is_string($redirect_url) && stripos($redirect_url, '.php') !== false;
+        return !empty($redirect_url);
     }
 
     protected function is_core_dot_slug(): bool
@@ -151,7 +137,7 @@ class Router
             '^wp-sitemap-([a-z]+?)-([a-z\d_-]+?)-(\d+?)\.xml$',
             '^wp-sitemap-([a-z]+?)-(\d+?)\.xml$',
             'robots\.txt$',
-            // see respond() 'favicon\.ico$',
+            // see respond method 'favicon\.ico$',
             'sitemap\.xml',
             // old '.*wp-(atom|rdf|rss|rss2|feed|commentsrss2)\.php$',
             // 403 '.*wp-app\.php(/.*)?$',
