@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace SzepeViktor\WordPress\Dot404;
 
+/**
+ * This router is only invoked after the web server fails to map the request
+ * to an existing file.
+ */
 class Router
 {
     protected const PIXEL_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMB/6W3WQAAAABJRU5ErkJggg==';
